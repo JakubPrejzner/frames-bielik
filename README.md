@@ -1,4 +1,4 @@
-# FRAMES benchmark — uniwersalny runner
+# FRAMES benchmark - uniwersalny runner
 
 Narzędzie do testowania **dowolnego modelu** (Bielik, Qwen, Llama, GPT, Claude — cokolwiek z OpenAI-compatible API) na benchmarku [FRAMES](https://arxiv.org/abs/2409.12941) od Google (824 pytania multi-hop z Wikipedii).
 
@@ -7,12 +7,12 @@ Powstało jako odpowiedź na wątek "Rozpoznać benchmark FRAMES" na Discordzie 
 ## Co dostajesz
 
 - **Skrypt ewaluacyjny** — tryb `naive` (bez kontekstu) + `oracle` (pełne artykuły Wiki)
-- **Resumable** — crash → restart → kontynuacja od miejsca przerwania
-- **LLM-as-judge** — prompt sędziego 1:1 z appendixu papera Google
+- **Resumable** - crash → restart → kontynuacja od miejsca przerwania
+- **LLM-as-judge** - prompt sędziego 1:1 z appendixu papera Google
 - **Cache Wikipedii** z rate limitingiem (żeby nie dostać bana od Wiki API)
-- **Output w JSONL** — łatwy do analizy, po jednym JSON per wiersz
+- **Output w JSONL** - łatwy do analizy, po jednym JSON per wiersz
 
-## Szybki start — testowanie Bielika
+## Szybki start - testowanie Bielika
 
 ### Wymagania
 
