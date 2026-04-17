@@ -1,0 +1,26 @@
+# Wyniki i cache — duże i zmienne, nie commitujemy
+results/
+wiki_cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sekrety — dla pewności
+.env
+*.key
+
+# Notatki robocze
+CLAUDE.md
+CLAUDE.md.local
