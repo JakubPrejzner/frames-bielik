@@ -72,7 +72,7 @@ python run_frames.py \
 
 > **Uwaga**: pierwszy run oracle pobiera ~2500 artykułów z Wikipedii do `wiki_cache/`. Przy rate limicie 1 req/s trwa to ~30 min. Kolejne uruchomienia korzystają z cache.
 
-### Ocena sędzią
+### Ocena judge
 
 ```bash
 export OPENAI_API_KEY=sk-...
