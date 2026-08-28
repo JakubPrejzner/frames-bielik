@@ -1,24 +1,24 @@
-# FRAMES benchmark - uniwersalny runner
+# FRAMES benchmark - universal runner
 
-Narzędzie do testowania **dowolnego modelu** (Bielik, Qwen, Llama, GPT, Claude — cokolwiek z OpenAI-compatible API) na benchmarku [FRAMES](https://arxiv.org/abs/2409.12941) od Google (824 pytania multi-hop z Wikipedii).
+A tool for testing **any model** (Bielik, Qwen, Llama, GPT, Claude — anything with an OpenAI-compatible API) on Google's [FRAMES](https://arxiv.org/abs/2409.12941) benchmark (824 multi-hop questions grounded in Wikipedia).
 
-Powstało jako odpowiedź na wątek "Rozpoznać benchmark FRAMES" na Discordzie [SpeakLeash](https://speakleash.org/).
+Built in response to the "Identifying the FRAMES benchmark" thread on the [SpeakLeash](https://speakleash.org/) Discord.
 
-## Co dostajesz
+## What you get
 
-- **Skrypt ewaluacyjny** — tryb `naive` (bez kontekstu) + `oracle` (pełne artykuły Wiki)
-- **Resumable** - crash → restart → kontynuacja od miejsca przerwania
-- **LLM-as-judge** - prompt sędziego 1:1 z appendixu papera Google
-- **Cache Wikipedii** z rate limitingiem (żeby nie dostać bana od Wiki API)
-- **Output w JSONL** - łatwy do analizy, po jednym JSON per wiersz
+- **Evaluation script** — `naive` mode (no context) + `oracle` mode (full Wiki articles)
+- **Resumable** - crash → restart → continues from where it left off
+- **LLM-as-judge** - judge prompt taken 1:1 from Google's paper appendix
+- **Wikipedia cache** with rate limiting (to avoid getting banned by the Wiki API)
+- **JSONL output** - easy to analyze, one JSON object per line
 
-## Szybki start - testowanie Bielika
+## Quick start - testing Bielik
 
-### Wymagania
+### Requirements
 
-- 1× GPU z 24GB+ VRAM (H100, A100, RTX 4090)
+- 1× GPU with 24GB+ VRAM (H100, A100, RTX 4090)
 - Python 3.10+
-- Klucz OpenAI API (do sędziego) — można zamienić na dowolny model
+- OpenAI API key (for the judge) — can be swapped for any model
 
 ### Setup (5 min)
 
@@ -28,7 +28,7 @@ cd frames-bielik
 
 pip install -r requirements.txt
 
-# Serwowanie modelu przez vLLM (wymaga GPU)
+# Serve the model via vLLM (requires a GPU)
 pip install vllm
 vllm serve speakleash/Bielik-11B-v3.0-Instruct \
     --port 8000 \
@@ -36,7 +36,7 @@ vllm serve speakleash/Bielik-11B-v3.0-Instruct \
     --gpu-memory-utilization 0.9
 ```
 
-### Smoke test (10 pytań, ~5 sekund)
+### Smoke test (10 questions, ~5 seconds)
 
 ```bash
 python run_frames.py \
@@ -47,7 +47,7 @@ python run_frames.py \
     --out results/smoke.jsonl
 ```
 
-### Pełny run — naive
+### Full run — naive
 
 ```bash
 python run_frames.py \
@@ -58,7 +58,7 @@ python run_frames.py \
     --out results/bielik_v3_naive.jsonl
 ```
 
-### Pełny run — oracle
+### Full run — oracle
 
 ```bash
 python run_frames.py \
@@ -70,9 +70,9 @@ python run_frames.py \
     --out results/bielik_v3_oracle.jsonl
 ```
 
-> **Uwaga**: pierwszy run oracle pobiera ~2500 artykułów z Wikipedii do `wiki_cache/`. Przy rate limicie 1 req/s trwa to ~30 min. Kolejne uruchomienia korzystają z cache.
+> **Note**: the first oracle run downloads ~2500 articles from Wikipedia into `wiki_cache/`. At a rate limit of 1 req/s this takes ~30 min. Subsequent runs use the cache.
 
-### Ocena judge
+### Judge scoring
 
 ```bash
 export OPENAI_API_KEY=sk-...
@@ -88,28 +88,28 @@ python run_frames.py \
     --workers 16
 ```
 
-Skrypt wypisze accuracy globalną + breakdown per typ rozumowania.
+The script prints overall accuracy plus a breakdown by reasoning type.
 
-## Uruchomienie dla INNEGO modelu
+## Running against a DIFFERENT model
 
-Zmień `--model` i `--base-url`. Przykłady:
+Change `--model` and `--base-url`. Examples:
 
 ```bash
-# Qwen przez vLLM
+# Qwen via vLLM
 vllm serve Qwen/Qwen2.5-14B-Instruct --port 8000
 python run_frames.py --mode naive \
     --model "Qwen/Qwen2.5-14B-Instruct" \
     --base-url http://localhost:8000/v1 \
     --out results/qwen_naive.jsonl
 
-# Ollama (działa na CPU)
+# Ollama (runs on CPU)
 ollama pull llama3.1:8b
 python run_frames.py --mode naive \
     --model "llama3.1:8b" \
     --base-url http://localhost:11434/v1 \
     --out results/llama_naive.jsonl
 
-# OpenAI API (bez lokalnego GPU)
+# OpenAI API (no local GPU needed)
 python run_frames.py --mode naive \
     --model "gpt-4.1-mini" \
     --base-url https://api.openai.com/v1 \
@@ -117,64 +117,64 @@ python run_frames.py --mode naive \
     --out results/gpt4mini_naive.jsonl
 ```
 
-## Tryby ewaluacji
+## Evaluation modes
 
-### naive (bez kontekstu)
+### naive (no context)
 
-Mierzy zaszytą wiedzę modelu. Pytanie idzie do modelu bez żadnego kontekstu.
+Measures the model's parametric knowledge. The question goes to the model with no context at all.
 
-- Szybkie: ~30s dla 824 pytań na H100
-- Referencja z papera: Gemini Pro 1.5 = 40.8%
+- Fast: ~30s for 824 questions on an H100
+- Paper reference: Gemini Pro 1.5 = 40.8%
 
-### oracle (pełne artykuły Wiki w kontekście)
+### oracle (full Wiki articles in context)
 
-Upper bound reading comprehension. Model dostaje pełne treści artykułów Wikipedii podanych w datasecie. **NIE jest to test RAG z retrieval-em** — model dostaje wszystkie dokumenty na raz, nie musi ich wyszukiwać.
+Upper bound for reading comprehension. The model gets the full text of the Wikipedia articles provided in the dataset. **This is NOT a RAG test with retrieval** — the model gets all documents at once, it doesn't have to search for them.
 
-- Wolniejsze: ~10-15 min na H100
-- Referencja z papera: Gemini Pro 1.5 = 72.9%
-- `--context-chars` kontroluje ile znaków kontekstu model dostaje (domyślnie 60k)
+- Slower: ~10-15 min on an H100
+- Paper reference: Gemini Pro 1.5 = 72.9%
+- `--context-chars` controls how many characters of context the model gets (default 60k)
 
-## Pliki wyjściowe
+## Output files
 
-Predykcje (`results/*.jsonl`):
+Predictions (`results/*.jsonl`):
 ```json
 {"idx": 0, "question": "...", "gold": "...", "prediction": "...", "reasoning_types": "Multiple constraints"}
 ```
 
-Po ocenie sędzią (`results/*.scored.jsonl`):
+After judge scoring (`results/*.scored.jsonl`):
 ```json
 {"idx": 0, "question": "...", "gold": "...", "prediction": "...", "reasoning_types": "...", "judge_raw": "Explanation: ... Decision: TRUE", "correct": true}
 ```
 
-## Czego to narzędzie NIE robi (jeszcze)
+## What this tool does NOT do (yet)
 
-- Nie ma BM25 / dense retrieval — to jest na roadmapie
-- Nie ma agentic multi-step retrieval — to osobny projekt
-- Nie tłumaczy pytań na polski (tylko oryginalny angielski dataset)
+- No BM25 / dense retrieval — on the roadmap
+- No agentic multi-step retrieval — separate project
+- Does not translate questions into Polish (original English dataset only)
 
-Jeśli chcesz te funkcjonalności — PR mile widziane.
+If you want these features — PRs welcome.
 
-## Moje wyniki (Bielik-11B-v3.0-Instruct)
+## My results (Bielik-11B-v3.0-Instruct)
 
-| Tryb | Accuracy | n_correct / n_total |
+| Mode | Accuracy | n_correct / n_total |
 | --- | --- | --- |
 | Naive | 12.38% | 102 / 824 |
 | Oracle | 52.31% | 431 / 824 |
 
-Sędzia: `gpt-4.1`, temperature 0.0. Pełny raport z analizą błędów: [REPORT.md](REPORT.md)
+Judge: `gpt-4.1`, temperature 0.0. Full report with error analysis: [REPORT.md](REPORT.md)
 
-## Referencje
+## References
 
-- Paper FRAMES: https://arxiv.org/abs/2409.12941
+- FRAMES paper: https://arxiv.org/abs/2409.12941
 - Dataset: https://huggingface.co/datasets/google/frames-benchmark
-- Inspiracja skryptu: [codelion/optillm](https://github.com/codelion/optillm/blob/main/scripts/eval_frames_benchmark.py)
+- Script inspiration: [codelion/optillm](https://github.com/codelion/optillm/blob/main/scripts/eval_frames_benchmark.py)
 
-## Licencja
+## License
 
 MIT
 
-## Podziękowania
+## Acknowledgments
 
-- Google za dataset FRAMES i prompt sędziego
-- [SpeakLeash](https://speakleash.org/) za Bielika i community wątku na Discordzie
-- [codelion/optillm](https://github.com/codelion/optillm) — skąd wzięliśmy pierwotną inspirację promptu sędziego
+- Google for the FRAMES dataset and judge prompt
+- [SpeakLeash](https://speakleash.org/) for Bielik and the Discord thread community
+- [codelion/optillm](https://github.com/codelion/optillm) — where the original judge prompt inspiration came from

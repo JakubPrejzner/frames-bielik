@@ -1,4 +1,4 @@
-# Wyniki i cache — duże i zmienne, nie commitujemy
+# Results and cache — large and volatile, not committed
 results/
 wiki_cache/
 
@@ -17,10 +17,10 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Sekrety — dla pewności
+# Secrets — just in case
 .env
 *.key
 
-# Notatki robocze
+# Working notes
 CLAUDE.md
 CLAUDE.md.local
